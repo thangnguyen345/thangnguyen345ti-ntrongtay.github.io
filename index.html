@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Tính Tiền Khách Hàng</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table, th, td { border: 1px solid #333; border-collapse: collapse; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        input { margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Trang Tính Tiền Khách Hàng</h1>
+
+    <h3>Thông Tin Khách Hàng</h3>
+    <label>Tên khách hàng: <input type="text" id="customerName"></label><br>
+    <label>Địa chỉ: <input type="text" id="customerAddress"></label><br>
+    <label>Số điện thoại: <input type="text" id="customerPhone"></label><br>
+    <label>Ngày: <input type="date" id="invoiceDate"></label><br>
+
+    <h3>Thêm Sản Phẩm</h3>
+    <label>Tên sản phẩm: <input type="text" id="productName"></label>
+    <label>Giá: <input type="number" id="productPrice"></label>
+    <label>Số lượng: <input type="number" id="productQuantity"></label>
+    <button onclick="addProduct()">Thêm</button>
+
+    <h3>Danh Sách Sản Phẩm</h3>
+    <table id="productTable">
+        <thead>
+            <tr>
+                <th>Tên sản phẩm</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h3>Tổng cộng: <span id="totalAmount">0</span> VND</h3>
+
+    <button onclick="exportToExcel()">Lưu Excel</button>
+
+    <script>
+        let products = [];
+
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const quantity = parseInt(document.getElementById('productQuantity').value);
+            const total = price * quantity;
+
+            products.push({ name, price, quantity, total });
+
+            const tbody = document.querySelector('#productTable tbody');
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = name;
+            row.insertCell(1).innerText = price;
+            row.insertCell(2).innerText = quantity;
+            row.insertCell(3).innerText = total;
+
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const total = products.reduce((sum, p) => sum + p.total, 0);
+            document.getElementById('totalAmount').innerText = total;
+        }
+
+        function exportToExcel() {
+            const customerName = document.getElementById('customerName').value;
+            const customerAddress = document.getElementById('customerAddress').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+            const invoiceDate = document.getElementById('invoiceDate').value;
+
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ['Tên khách hàng', customerName],
+                ['Địa chỉ', customerAddress],
+                ['Số điện thoại', customerPhone],
+                ['Ngày', invoiceDate],
+                [],
+                ['Tên sản phẩm', 'Giá', 'Số lượng', 'Thành tiền'],
+                ...products.map(p => [p.name, p.price, p.quantity, p.total]),
+                [],
+                ['Tổng cộng', '', '', products.reduce((sum, p) => sum + p.total, 0)]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Hóa đơn');
+            XLSX.writeFile(wb, 'hoa_don.xlsx');
+        }
+    </script>
+</body>
+</html>
